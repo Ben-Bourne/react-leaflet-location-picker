@@ -1,0 +1,31 @@
+{
+  "name": "react-leaflet-location-picker",
+  "version": "1.0.0",
+  "description": "A flexible component for picking points or areas from react-leaflet.",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "rm ./dist/* && tsc",
+    "prepublish": "npm run build",
+    "test": "./test.sh"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ben-Bourne/react-leaflet-location-picker.git"
+  },
+  "author": "Ben Bourne",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Ben-Bourne/react-leaflet-location-picker/issues"
+  },
+  "homepage": "https://github.com/Ben-Bourne/react-leaflet-location-picker#readme",
+  "devDependencies": {
+    "@types/react-leaflet": "^2.2.1",
+    "typescript": "^3.5.3"
+  },
+  "dependencies": {
+    "leaflet": "^1.5.1",
+    "react": "^16.8.6",
+    "react-dom": "^16.8.6",
+    "react-leaflet": "^2.4.0"
+  }
+}
