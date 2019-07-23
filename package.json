@@ -1,6 +1,6 @@
 {
   "name": "react-leaflet-location-picker",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A flexible component for picking points or areas from react-leaflet.",
   "main": "dist/index.js",
   "types": "dist/LocationPicker.d.ts",
@@ -36,10 +36,12 @@
     "@types/react-leaflet": "^2.2.1",
     "typescript": "^3.5.3"
   },
+  "peerDependencies": {
+    "react": "^16.8.6",
+    "react-dom": "^16.8.6"
+  },
   "dependencies": {
     "leaflet": "^1.5.1",
-    "react": "^16.8.6",
-    "react-dom": "^16.8.6",
     "react-leaflet": "^2.4.0",
     "react-leaflet-control": "^2.1.1"
   }
