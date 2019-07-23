@@ -23,6 +23,14 @@
     "url": "https://github.com/Ben-Bourne/react-leaflet-location-picker/issues"
   },
   "homepage": "https://github.com/Ben-Bourne/react-leaflet-location-picker#readme",
+  "keywords": [
+    "react",
+    "leaflet",
+    "react-leaflet",
+    "map",
+    "coordinates",
+    "location"
+  ],
   "devDependencies": {
     "@types/leaflet": "^1.4.6",
     "@types/react-leaflet": "^2.2.1",
@@ -30,8 +38,9 @@
   },
   "dependencies": {
     "leaflet": "^1.5.1",
-    "react-leaflet": "^2.4.0",
     "react": "^16.8.6",
-    "react-dom": "^16.8.6"
+    "react-dom": "^16.8.6",
+    "react-leaflet": "^2.4.0",
+    "react-leaflet-control": "^2.1.1"
   }
 }

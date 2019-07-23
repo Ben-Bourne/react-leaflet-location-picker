@@ -1,7 +1,15 @@
 import React, { Component } from "react";
 import { Map, TileLayer, Viewport } from "react-leaflet";
 import { LatLngTuple, LeafletMouseEvent } from "leaflet";
+import Control from "react-leaflet-control";
+import Banner, { IBannerProps } from "./Banner";
+import { setPrecision } from "./utils";
 import "leaflet/dist/leaflet.css";
+
+export type Circle = { centre: LatLngTuple; radius: number };
+export type Polygon = LatLngTuple[];
+
+type pickerMode = "point" | "circle" | "polygon" | "none";
 
 interface ILocationPickerProps {
   tileLayer: {
@@ -9,21 +17,25 @@ interface ILocationPickerProps {
     attribution: string;
   };
   bindMap: boolean;
+  showInputs: boolean;
   precision: number;
   pointMode?: {
-    onClick: () => void;
+    control?: {
+      values: LatLngTuple[];
+      onClick: (point: LatLngTuple) => void;
+    };
+    showBanner: boolean;
   };
 }
 
-interface ILocationPickerState {
-  lat: number | undefined;
-  lng: number | undefined;
-}
-
-const defaultState: ILocationPickerState = {
+type ILocationPickerState = Readonly<typeof defaultState>;
+const defaultState = {
   lat: 0,
-  lng: 0
+  lng: 0,
+  pickerMode: "point" as pickerMode,
+  points: [] as LatLngTuple[] | undefined
 };
+
 const mapBounds: [LatLngTuple, LatLngTuple] = [[-90, -180], [90, 180]];
 const defaultViewport: Viewport = {
   center: [30, 0],
@@ -38,20 +50,22 @@ export default class LocationPicker extends Component<
     super(props);
     this.state = defaultState;
   }
-  static defaultProps = {
+  static defaultProps: ILocationPickerProps = {
     tileLayer: {
       url: "http://{s}.tile.osm.org/{z}/{x}/{y}.png",
       attribution:
         '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
     },
     bindMap: true,
+    showInputs: true,
     precision: 6
   };
 
   render() {
     const bounds = this.props.bindMap ? mapBounds : undefined;
     return (
-      <div style={{ display: "inline-block" }}>
+      <div>
+        {this.renderBanner()}
         <Map
           style={{ height: 400, width: 600 }}
           viewport={defaultViewport}
@@ -61,8 +75,30 @@ export default class LocationPicker extends Component<
           minZoom={2}
         >
           <TileLayer {...this.props.tileLayer} />
+          <Control position="topright">
+            <button>Success!</button>
+          </Control>
         </Map>
-        <div>
+        {this.renderInputs()}
+      </div>
+    );
+  }
+  private renderBanner = () => {
+    const { pointMode } = this.props;
+    const bannerProps: IBannerProps = { precision: this.props.precision };
+    if (pointMode) {
+      if (pointMode.control) {
+        bannerProps.points = pointMode.control.values;
+      } else {
+        bannerProps.points = this.state.points;
+      }
+    }
+    return <Banner {...bannerProps} />;
+  };
+  private renderInputs = () => {
+    if (this.props.showInputs) {
+      return (
+        <div style={{ display: "inline-block" }}>
           <input
             type="number"
             value={this.state.lat}
@@ -74,14 +110,24 @@ export default class LocationPicker extends Component<
             onChange={this.inputChange("lng")}
           />
         </div>
-      </div>
-    );
-  }
+      );
+    }
+  };
   private handleClick = (e: LeafletMouseEvent) => {
-    this.setState({
-      lat: setPrecision(e.latlng.lat, this.props.precision),
-      lng: setPrecision(e.latlng.lng, this.props.precision)
-    });
+    const { precision, pointMode } = this.props;
+    const lat = setPrecision(e.latlng.lat, precision);
+    const lng = setPrecision(e.latlng.lng, precision);
+    this.setState({ lat, lng });
+    switch (this.state.pickerMode) {
+      case "point": {
+        if (pointMode && pointMode.control) {
+          pointMode.control.onClick([lat, lng]);
+        } else {
+          this.setState({ points: this.state.points!.concat([[lat, lng]]) });
+        }
+        break;
+      }
+    }
   };
   private inputChange = (field: string) => (e: React.ChangeEvent<any>) => {
     const newState = { [field]: Number(e.target.value) } as Pick<
@@ -91,7 +137,3 @@ export default class LocationPicker extends Component<
     this.setState(newState);
   };
 }
-
-const setPrecision = (value: number | string, precision: number): number => {
-  return +Number(value).toPrecision(precision);
-};
