@@ -29,3 +29,15 @@ export const stringifyCircle = (circle: Circle, precision: number): string => {
   const point = stringifyPoint(circle.center, precision);
   return `(${point} - ${Math.round(circle.radius)})`;
 };
+
+export const indexOfObject = (arr: any[], value: any): number => {
+  const stringVal = JSON.stringify(value);
+  let i = 0;
+  for (const obj of arr) {
+    if (stringVal === JSON.stringify(obj)) {
+      return i;
+    }
+    i += 1;
+  }
+  return -1;
+};
