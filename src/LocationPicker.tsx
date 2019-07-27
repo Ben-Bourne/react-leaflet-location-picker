@@ -24,10 +24,11 @@ const defaultProps = {
   showInputs: true,
   precision: 6,
   pointMode: undefined as PointMode | undefined,
-  circleMode: undefined as CircleMode | undefined
+  circleMode: undefined as CircleMode | undefined,
+  polygonMode: undefined as PolygonMode | undefined
 };
 
-type PointMode = {
+export type PointMode = {
   control?: {
     values: LatLngTuple[];
     onClick?: (point: LatLngTuple) => void;
@@ -36,11 +37,20 @@ type PointMode = {
   banner: boolean;
 };
 
-type CircleMode = {
+export type CircleMode = {
   control?: {
     values: Circle[];
     onClick?: (point: LatLngTuple) => void;
     onRemove?: (circle: Circle) => void;
+  };
+  banner: boolean;
+};
+
+export type PolygonMode = {
+  control?: {
+    values: Polygon[];
+    onClick?: (point: LatLngTuple) => void;
+    onRemove?: (polygon: Polygon) => void;
   };
   banner: boolean;
 };
@@ -53,7 +63,8 @@ const defaultState = {
   points: [] as LatLngTuple[],
   circles: [] as Circle[],
   circleCenter: null as LatLngTuple | null,
-  polygons: [] as Polygon[]
+  polygons: [] as Polygon[],
+  partialPolygon: [] as Polygon
 };
 
 const mapBounds: [LatLngTuple, LatLngTuple] = [[-90, -180], [90, 180]];
@@ -96,10 +107,10 @@ export default class LocationPicker extends Component<
     );
   }
   private renderBanner = () => {
-    const { pointMode, circleMode } = this.props;
-    const bannerProps: IBannerProps = { precision: this.props.precision };
+    const { pointMode, circleMode, polygonMode } = this.props;
+    const bannerProps: IBannerProps = {};
     if (pointMode && pointMode.banner) {
-      if (pointMode.control && pointMode.control.values) {
+      if (pointMode.control) {
         bannerProps.points = pointMode.control.values;
         bannerProps.pointRemoval = pointMode.control.onRemove;
       } else {
@@ -108,7 +119,7 @@ export default class LocationPicker extends Component<
       }
     }
     if (circleMode && circleMode.banner) {
-      if (circleMode.control && circleMode.control.values) {
+      if (circleMode.control) {
         bannerProps.circles = circleMode.control.values;
         bannerProps.circleRemoval = circleMode.control.onRemove;
       } else {
@@ -116,36 +127,61 @@ export default class LocationPicker extends Component<
         bannerProps.circleRemoval = this.removeObject("circles");
       }
     }
+    if (polygonMode && polygonMode.banner) {
+      if (polygonMode.control) {
+        bannerProps.polygons = polygonMode.control.values;
+        bannerProps.polygonRemoval = polygonMode.control.onRemove;
+      } else {
+        bannerProps.polygons = this.state.polygons;
+        bannerProps.polygonRemoval = this.removeObject("polygons");
+      }
+    }
     return <Banner {...bannerProps} />;
   };
   private renderModeControl = () => {
-    const { pointMode, circleMode } = this.props;
+    const { pointMode, circleMode, polygonMode } = this.props;
     const buttons: JSX.Element[] = [];
     if (pointMode) {
       buttons.push(
         <button key={"point"} onClick={this.changeMode("points")}>
-          point
+          Point
         </button>
       );
     }
     if (circleMode) {
       buttons.push(
         <button key={"circle"} onClick={this.changeMode("circles")}>
-          circle
+          Circle
         </button>
       );
+    }
+    if (polygonMode) {
+      buttons.push(
+        <button key={"polygon"} onClick={this.changeMode("polygons")}>
+          Polygon
+        </button>
+      );
+      if (this.state.partialPolygon.length > 0) {
+        buttons.push(
+          <button key="polygonAdd" onClick={this.addPolygon}>
+            Add
+          </button>
+        );
+      }
     }
     return <Control position="topright">{buttons}</Control>;
   };
   private renderOverlays = () => {
     const { points, circles, polygons, pickerMode } = this.state;
-    const { pointMode, circleMode } = this.props;
+    const { pointMode, circleMode, polygonMode } = this.props;
     if (this.props.overlayAll) {
       const opts: IOverlaysProps = { points, circles, polygons };
       if (pointMode && pointMode.control)
         opts.points = pointMode.control.values;
       if (circleMode && circleMode.control)
         opts.circles = circleMode.control.values;
+      if (polygonMode && polygonMode.control)
+        opts.polygons = polygonMode.control.values;
       return <Overlays {...opts} />;
     } else {
       const opts: IOverlaysProps = { points: [], circles: [], polygons: [] };
@@ -160,6 +196,13 @@ export default class LocationPicker extends Component<
             circleMode && circleMode.control
               ? circleMode.control.values
               : circles;
+          break;
+        }
+        case "polygons": {
+          opts.polygons =
+            polygonMode && polygonMode.control
+              ? polygonMode.control.values
+              : polygons;
           break;
         }
       }
@@ -193,8 +236,14 @@ export default class LocationPicker extends Component<
   };
 
   private handleClick = (e: LeafletMouseEvent) => {
-    const { precision, pointMode, circleMode } = this.props;
-    const { pickerMode, points, circles, circleCenter } = this.state;
+    const { precision, pointMode, circleMode, polygonMode } = this.props;
+    const {
+      pickerMode,
+      points,
+      circles,
+      circleCenter,
+      partialPolygon
+    } = this.state;
     const lat = setPrecision(e.latlng.lat, precision);
     const lng = setPrecision(e.latlng.lng, precision);
     this.setState({ lat, lng });
@@ -226,6 +275,15 @@ export default class LocationPicker extends Component<
         }
         break;
       }
+      case "polygons": {
+        if (polygonMode && polygonMode.control && polygonMode.control.onClick) {
+          polygonMode.control.onClick([lat, lng]);
+        } else {
+          this.setState({
+            partialPolygon: partialPolygon.concat([[lat, lng]])
+          });
+        }
+      }
     }
   };
   private inputChange = (field: string) => (e: React.ChangeEvent<any>) => {
@@ -237,6 +295,12 @@ export default class LocationPicker extends Component<
   };
   private changeMode = (pickerMode: PickerMode) => () => {
     this.setState({ pickerMode, circleCenter: null });
+  };
+  private addPolygon = () => {
+    this.setState({
+      polygons: this.state.polygons.concat([this.state.partialPolygon]),
+      partialPolygon: []
+    });
   };
 
   private removeObject = (type: PickerMode) => (

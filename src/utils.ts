@@ -1,5 +1,5 @@
-import L, { LatLngTuple } from "leaflet";
-import { Circle } from "./LocationPicker";
+import L, { LatLngTuple, polygon } from "leaflet";
+import { Circle, Polygon } from "./LocationPicker";
 
 export const setPrecision = (
   value: number | string,
@@ -16,18 +16,20 @@ export const calculateRadius = (
   return leafletPoint.distanceTo(point2);
 };
 
-export const stringifyPoint = (
-  point: LatLngTuple,
-  precision: number
-): string => {
-  const lat = setPrecision(point[0], precision);
-  const lng = setPrecision(point[1], precision);
-  return `(${lat},${lng})`;
+export const stringifyPoint = (point: LatLngTuple): string => {
+  return `(${point[0]},${point[1]})`;
 };
 
-export const stringifyCircle = (circle: Circle, precision: number): string => {
-  const point = stringifyPoint(circle.center, precision);
+export const stringifyCircle = (circle: Circle): string => {
+  const point = stringifyPoint(circle.center);
   return `(${point} - ${Math.round(circle.radius)})`;
+};
+
+export const stringifyPolygon = (polygon: Polygon): string => {
+  let stringPolygon = "[";
+  polygon.forEach(point => (stringPolygon += stringifyPoint(point)));
+  stringPolygon += "]";
+  return stringPolygon;
 };
 
 export const indexOfObject = (arr: any[], value: any): number => {

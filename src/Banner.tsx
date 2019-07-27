@@ -2,10 +2,9 @@ import React from "react";
 import { LatLngTuple } from "leaflet";
 import { Circle, Polygon } from "./LocationPicker";
 import Tag from "./Tag";
-import { stringifyPoint, stringifyCircle } from "./utils";
+import { stringifyPoint, stringifyCircle, stringifyPolygon } from "./utils";
 
 export interface IBannerProps {
-  precision: number;
   points?: LatLngTuple[];
   pointRemoval?: (point: LatLngTuple) => void;
   circles?: Circle[];
@@ -16,7 +15,7 @@ export interface IBannerProps {
 
 const Banner: React.FC<IBannerProps> = props => {
   const renderPointsBanner = () => {
-    const { points, pointRemoval, precision } = props;
+    const { points, pointRemoval } = props;
     if (!points) return null;
     let pointTags: JSX.Element[] = [];
     if (pointRemoval) {
@@ -24,7 +23,7 @@ const Banner: React.FC<IBannerProps> = props => {
         pointRemoval(removePoint);
       };
       pointTags = points.map((point, i) => {
-        const stringPoint = stringifyPoint(point, precision);
+        const stringPoint = stringifyPoint(point);
         return (
           <Tag
             content={stringPoint}
@@ -35,7 +34,7 @@ const Banner: React.FC<IBannerProps> = props => {
       });
     } else {
       pointTags = points.map((point, i) => {
-        const stringPoint = stringifyPoint(point, precision);
+        const stringPoint = stringifyPoint(point);
         return <Tag content={stringPoint} key={stringPoint + i} />;
       });
     }
@@ -47,7 +46,7 @@ const Banner: React.FC<IBannerProps> = props => {
     );
   };
   const renderCirclesBanner = () => {
-    const { circles, circleRemoval, precision } = props;
+    const { circles, circleRemoval } = props;
     if (!circles) return null;
     let circleTags: JSX.Element[] = [];
     if (circleRemoval) {
@@ -55,7 +54,7 @@ const Banner: React.FC<IBannerProps> = props => {
         circleRemoval(removeCircle);
       };
       circleTags = circles.map((circle, i) => {
-        const stringCircle = stringifyCircle(circle, precision);
+        const stringCircle = stringifyCircle(circle);
         return (
           <Tag
             content={stringCircle}
@@ -66,7 +65,7 @@ const Banner: React.FC<IBannerProps> = props => {
       });
     } else {
       circleTags = circles.map((circle, i) => {
-        const stringCircle = stringifyCircle(circle, precision);
+        const stringCircle = stringifyCircle(circle);
         return <Tag content={stringCircle} key={stringCircle + i} />;
       });
     }
@@ -77,10 +76,42 @@ const Banner: React.FC<IBannerProps> = props => {
       </div>
     );
   };
+  const renderPolygonsBanner = () => {
+    const { polygons, polygonRemoval } = props;
+    if (!polygons) return null;
+    let polygonTags: JSX.Element[] = [];
+    if (polygonRemoval) {
+      const onRemove = (removePolygon: Polygon) => () => {
+        polygonRemoval(removePolygon);
+      };
+      polygonTags = polygons.map((polygon, i) => {
+        const stringPolygon = stringifyPolygon(polygon);
+        return (
+          <Tag
+            content={stringPolygon}
+            onRemove={onRemove(polygon)}
+            key={stringPolygon + i}
+          />
+        );
+      });
+    } else {
+      polygonTags = polygons.map((polygon, i) => {
+        const stringPolygon = stringifyPolygon(polygon);
+        return <Tag content={stringPolygon} key={stringPolygon + i} />;
+      });
+    }
+    return (
+      <div className="flex-container flex-wrap some-margin">
+        <h3 className="text no-margin">Polygons: </h3>
+        {polygonTags}
+      </div>
+    );
+  };
   return (
     <>
       {renderPointsBanner()}
       {renderCirclesBanner()}
+      {renderPolygonsBanner()}
     </>
   );
 };

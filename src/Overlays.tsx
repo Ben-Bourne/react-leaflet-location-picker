@@ -1,5 +1,9 @@
 import React from "react";
-import { Marker, Circle as MapCircle } from "react-leaflet";
+import {
+  Marker,
+  Circle as MapCircle,
+  Polygon as MapPolygon
+} from "react-leaflet";
 import L, { LatLngTuple } from "leaflet";
 import { Circle, Polygon } from "./LocationPicker";
 import { markerIcon } from "./icons";
@@ -18,7 +22,10 @@ const Overlays: React.FC<IOverlaysProps> = props => {
     mapObjects.push(<Marker position={point} key={"m" + i} icon={icon} />)
   );
   props.circles.forEach((circle, i) =>
-    mapObjects.push(<MapCircle {...circle} key={"p" + i} />)
+    mapObjects.push(<MapCircle {...circle} key={"c" + i} />)
+  );
+  props.polygons.forEach((polygon, i) =>
+    mapObjects.push(<MapPolygon positions={polygon} key={"p" + i} />)
   );
   return <React.Fragment>{mapObjects}</React.Fragment>;
 };
