@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import { Map, TileLayer, Viewport } from "react-leaflet";
-import { LatLngTuple, LeafletMouseEvent } from "leaflet";
+import { LatLngTuple, LeafletMouseEvent, polygon } from "leaflet";
 import Control from "react-leaflet-control";
 import Banner, { IBannerProps } from "./Banner";
 import Overlays, { IOverlaysProps } from "./Overlays";
@@ -50,6 +50,7 @@ export type PolygonMode = {
   control?: {
     values: Polygon[];
     onClick?: (point: LatLngTuple) => void;
+    onAdd?: () => void;
     onRemove?: (polygon: Polygon) => void;
   };
   banner: boolean;
@@ -59,6 +60,7 @@ type ILocationPickerState = Readonly<typeof defaultState>;
 const defaultState = {
   lat: 0,
   lng: 0,
+  hoverPosition: [0, 0] as LatLngTuple,
   pickerMode: "points" as PickerMode,
   points: [] as LatLngTuple[],
   circles: [] as Circle[],
@@ -96,6 +98,7 @@ export default class LocationPicker extends Component<
           maxBounds={bounds}
           maxBoundsViscosity={1}
           onClick={this.handleClick}
+          onMouseMove={this.handleMouseMove}
           minZoom={2}
         >
           <TileLayer {...tileLayer} />
@@ -162,52 +165,63 @@ export default class LocationPicker extends Component<
         </button>
       );
       if (this.state.partialPolygon.length > 0) {
-        buttons.push(
-          <button key="polygonAdd" onClick={this.addPolygon}>
-            Add
-          </button>
-        );
+        if (polygonMode.control) {
+          if (polygonMode.control.onAdd) {
+            buttons.push(
+              <button key="polygonAdd" onClick={polygonMode.control.onAdd}>
+                Add
+              </button>
+            );
+          }
+        } else {
+          buttons.push(
+            <button key="polygonAdd" onClick={this.addPolygon}>
+              Add
+            </button>
+          );
+        }
       }
     }
     return <Control position="topright">{buttons}</Control>;
   };
   private renderOverlays = () => {
-    const { points, circles, polygons, pickerMode } = this.state;
-    const { pointMode, circleMode, polygonMode } = this.props;
-    if (this.props.overlayAll) {
-      const opts: IOverlaysProps = { points, circles, polygons };
-      if (pointMode && pointMode.control)
-        opts.points = pointMode.control.values;
-      if (circleMode && circleMode.control)
-        opts.circles = circleMode.control.values;
-      if (polygonMode && polygonMode.control)
-        opts.polygons = polygonMode.control.values;
-      return <Overlays {...opts} />;
-    } else {
-      const opts: IOverlaysProps = { points: [], circles: [], polygons: [] };
-      switch (pickerMode) {
-        case "points": {
-          opts.points =
-            pointMode && pointMode.control ? pointMode.control.values : points;
-          break;
-        }
-        case "circles": {
-          opts.circles =
-            circleMode && circleMode.control
-              ? circleMode.control.values
-              : circles;
-          break;
-        }
-        case "polygons": {
-          opts.polygons =
-            polygonMode && polygonMode.control
-              ? polygonMode.control.values
-              : polygons;
-          break;
-        }
-      }
-      return <Overlays {...opts} />;
+    const opts: IOverlaysProps = {
+      points: this.calculatePoints(),
+      circles: this.calculateCircles(),
+      polygons: this.calculatePolygons()
+    };
+    return <Overlays {...opts} />;
+  };
+  private calculatePoints = () => {
+    const { pointMode, overlayAll } = this.props;
+    const { pickerMode, points } = this.state;
+    if (pointMode && (overlayAll || pickerMode === "points")) {
+      return pointMode.control ? pointMode.control.values : points;
     }
+    return [];
+  };
+  private calculateCircles = () => {
+    const { circleMode, overlayAll } = this.props;
+    const { pickerMode, circles, circleCenter, hoverPosition } = this.state;
+    if (circleMode && (overlayAll || pickerMode === "circles")) {
+      const movingCircle = circleCenter
+        ? {
+            center: circleCenter,
+            radius: calculateRadius(circleCenter, hoverPosition)
+          }
+        : null;
+      return movingCircle ? circles.concat([movingCircle]) : circles;
+    }
+    return [];
+  };
+  private calculatePolygons = () => {
+    const { polygonMode, overlayAll } = this.props;
+    const { pickerMode, polygons, partialPolygon, hoverPosition } = this.state;
+    if (polygonMode && (overlayAll || pickerMode === "polygons")) {
+      const movingPolygon = partialPolygon.concat([hoverPosition]);
+      return polygons.concat([movingPolygon]);
+    }
+    return [];
   };
   private renderInputs = () => {
     if (!this.props.showInputs) return null;
@@ -286,6 +300,11 @@ export default class LocationPicker extends Component<
       }
     }
   };
+  private handleMouseMove = (e: LeafletMouseEvent) => {
+    const lat = setPrecision(e.latlng.lat, this.props.precision);
+    const lng = setPrecision(e.latlng.lng, this.props.precision);
+    this.setState({ hoverPosition: [lat, lng] });
+  };
   private inputChange = (field: string) => (e: React.ChangeEvent<any>) => {
     const newState = { [field]: Number(e.target.value) } as Pick<
       ILocationPickerState,
@@ -294,7 +313,7 @@ export default class LocationPicker extends Component<
     this.setState(newState);
   };
   private changeMode = (pickerMode: PickerMode) => () => {
-    this.setState({ pickerMode, circleCenter: null });
+    this.setState({ pickerMode, circleCenter: null, partialPolygon: [] });
   };
   private addPolygon = () => {
     this.setState({
