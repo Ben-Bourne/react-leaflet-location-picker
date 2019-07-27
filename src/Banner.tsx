@@ -40,7 +40,7 @@ const Banner: React.FC<IBannerProps> = props => {
       });
     }
     return (
-      <div className="flex-container flex-wrap">
+      <div className="flex-container flex-wrap some-margin">
         <h3 className="text no-margin">Points: </h3>
         {pointTags}
       </div>
@@ -71,7 +71,7 @@ const Banner: React.FC<IBannerProps> = props => {
       });
     }
     return (
-      <div className="flex-container flex-wrap">
+      <div className="flex-container flex-wrap some-margin">
         <h3 className="text no-margin">Circles: </h3>
         {circleTags}
       </div>

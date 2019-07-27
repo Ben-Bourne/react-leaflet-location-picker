@@ -169,17 +169,25 @@ export default class LocationPicker extends Component<
   private renderInputs = () => {
     if (!this.props.showInputs) return null;
     return (
-      <div style={{ display: "inline-block" }}>
-        <input
-          type="number"
-          value={this.state.lat}
-          onChange={this.inputChange("lat")}
-        />
-        <input
-          type="number"
-          value={this.state.lng}
-          onChange={this.inputChange("lng")}
-        />
+      <div className="flex-container some-margin">
+        <div className="full-width">
+          <label className="text pad-right">Latitude:</label>
+          <input
+            type="number"
+            value={this.state.lat}
+            onChange={this.inputChange("lat")}
+            className="large-width input-field"
+          />
+        </div>
+        <div className="full-width some-margin">
+          <label className="text pad-right">Longitude:</label>
+          <input
+            type="number"
+            value={this.state.lng}
+            onChange={this.inputChange("lng")}
+            className="large-width input-field"
+          />
+        </div>
       </div>
     );
   };

@@ -18,6 +18,21 @@
 .no-margin {
   margin: 0px !important;
 }
+.some-margin {
+  margin: 4px;
+}
+.pad-right {
+  padding-right: 4px;
+}
 .text {
   font-family: Arial, Helvetica, sans-serif;
+}
+.full-width {
+  width: 100%;
+}
+.large-width {
+  width: 60%;
+}
+.input-field {
+  border-radius: 4px;
 }
