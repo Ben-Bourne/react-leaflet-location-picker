@@ -21,6 +21,7 @@ const defaultProps = {
   mapStyle: { height: 300, width: "auto" } as React.CSSProperties,
   bindMap: true,
   overlayAll: true,
+  useDynamic: true,
   showInputs: true,
   precision: 6,
   pointMode: undefined as PointMode | undefined,
@@ -86,7 +87,8 @@ export default class LocationPicker extends Component<
   static defaultProps = defaultProps;
 
   render() {
-    const { bindMap, mapStyle, tileLayer } = this.props;
+    console.log("spammed");
+    const { bindMap, mapStyle, useDynamic, tileLayer } = this.props;
     const bounds = bindMap ? mapBounds : undefined;
     return (
       <>
@@ -98,7 +100,7 @@ export default class LocationPicker extends Component<
           maxBounds={bounds}
           maxBoundsViscosity={1}
           onClick={this.handleClick}
-          onMouseMove={this.handleMouseMove}
+          onMouseMove={useDynamic ? this.handleMouseMove : undefined}
           minZoom={2}
         >
           <TileLayer {...tileLayer} />
@@ -201,25 +203,32 @@ export default class LocationPicker extends Component<
     return [];
   };
   private calculateCircles = () => {
-    const { circleMode, overlayAll } = this.props;
+    const { circleMode, overlayAll, useDynamic } = this.props;
     const { pickerMode, circles, circleCenter, hoverPosition } = this.state;
     if (circleMode && (overlayAll || pickerMode === "circles")) {
-      const movingCircle = circleCenter
-        ? {
-            center: circleCenter,
-            radius: calculateRadius(circleCenter, hoverPosition)
-          }
-        : null;
+      if (circleMode.control) return circleMode.control.values;
+      const movingCircle =
+        useDynamic && circleCenter
+          ? {
+              center: circleCenter,
+              radius: calculateRadius(circleCenter, hoverPosition)
+            }
+          : null;
       return movingCircle ? circles.concat([movingCircle]) : circles;
     }
     return [];
   };
   private calculatePolygons = () => {
-    const { polygonMode, overlayAll } = this.props;
+    const { polygonMode, overlayAll, useDynamic } = this.props;
     const { pickerMode, polygons, partialPolygon, hoverPosition } = this.state;
     if (polygonMode && (overlayAll || pickerMode === "polygons")) {
-      const movingPolygon = partialPolygon.concat([hoverPosition]);
-      return polygons.concat([movingPolygon]);
+      if (polygonMode.control) return polygonMode.control.values;
+      const movingPolygon = useDynamic
+        ? partialPolygon.concat([hoverPosition])
+        : null;
+      return movingPolygon
+        ? polygons.concat([movingPolygon])
+        : polygons.concat([partialPolygon]);
     }
     return [];
   };
