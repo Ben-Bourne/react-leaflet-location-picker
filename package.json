@@ -3,7 +3,7 @@
   "version": "1.2.0",
   "description": "A flexible component for picking points or areas from react-leaflet.",
   "main": "dist/index.js",
-  "types": "dist/LocationPicker.d.ts",
+  "types": "dist/index.d.ts",
   "files": [
     "dist"
   ],

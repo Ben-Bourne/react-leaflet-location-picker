@@ -1,7 +1,7 @@
 import React from "react";
 import { deleteIcon } from "./icons";
 
-interface ITagProps {
+export interface ITagProps {
   content: string;
   onRemove?: (value: any) => void;
 }

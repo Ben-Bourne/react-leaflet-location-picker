@@ -9,9 +9,9 @@ import "leaflet/dist/leaflet.css";
 
 export type Circle = { center: LatLngTuple; radius: number };
 export type Polygon = LatLngTuple[];
-type PickerMode = "points" | "circles" | "polygons";
+export type PickerMode = "points" | "circles" | "polygons";
 
-type ILocationPickerProps = Readonly<typeof defaultProps>;
+export type ILocationPickerProps = Readonly<typeof defaultProps>;
 const defaultProps = {
   tileLayer: {
     url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
@@ -44,7 +44,7 @@ type CircleMode = {
   banner: boolean;
 };
 
-type ILocationPickerState = Readonly<typeof defaultState>;
+export type ILocationPickerState = Readonly<typeof defaultState>;
 const defaultState = {
   lat: 0,
   lng: 0,
