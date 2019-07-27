@@ -59,6 +59,7 @@ export type PolygonMode = {
 
 type ILocationPickerState = Readonly<typeof defaultState>;
 const defaultState = {
+  throttleTimer: new Date().getTime(),
   lat: 0,
   lng: 0,
   hoverPosition: [0, 0] as LatLngTuple,
@@ -87,7 +88,6 @@ export default class LocationPicker extends Component<
   static defaultProps = defaultProps;
 
   render() {
-    console.log("spammed");
     const { bindMap, mapStyle, useDynamic, tileLayer } = this.props;
     const bounds = bindMap ? mapBounds : undefined;
     return (
@@ -310,9 +310,12 @@ export default class LocationPicker extends Component<
     }
   };
   private handleMouseMove = (e: LeafletMouseEvent) => {
-    const lat = setPrecision(e.latlng.lat, this.props.precision);
-    const lng = setPrecision(e.latlng.lng, this.props.precision);
-    this.setState({ hoverPosition: [lat, lng] });
+    const now = new Date().getTime();
+    if (now - this.state.throttleTimer > 50) {
+      const lat = setPrecision(e.latlng.lat, this.props.precision);
+      const lng = setPrecision(e.latlng.lng, this.props.precision);
+      this.setState({ hoverPosition: [lat, lng], throttleTimer: now });
+    }
   };
   private inputChange = (field: string) => (e: React.ChangeEvent<any>) => {
     const newState = { [field]: Number(e.target.value) } as Pick<
