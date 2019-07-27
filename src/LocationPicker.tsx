@@ -18,7 +18,7 @@ const defaultProps = {
     attribution:
       '&amp;copy <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
   },
-  mapStyle: { height: 400, width: "auto" } as React.CSSProperties,
+  mapStyle: { height: 300, width: "auto" } as React.CSSProperties,
   bindMap: true,
   overlayAll: true,
   showInputs: true,
@@ -167,22 +167,21 @@ export default class LocationPicker extends Component<
     }
   };
   private renderInputs = () => {
-    if (this.props.showInputs) {
-      return (
-        <div style={{ display: "inline-block" }}>
-          <input
-            type="number"
-            value={this.state.lat}
-            onChange={this.inputChange("lat")}
-          />
-          <input
-            type="number"
-            value={this.state.lng}
-            onChange={this.inputChange("lng")}
-          />
-        </div>
-      );
-    }
+    if (!this.props.showInputs) return null;
+    return (
+      <div style={{ display: "inline-block" }}>
+        <input
+          type="number"
+          value={this.state.lat}
+          onChange={this.inputChange("lat")}
+        />
+        <input
+          type="number"
+          value={this.state.lng}
+          onChange={this.inputChange("lng")}
+        />
+      </div>
+    );
   };
 
   private handleClick = (e: LeafletMouseEvent) => {

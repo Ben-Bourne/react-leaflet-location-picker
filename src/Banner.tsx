@@ -40,10 +40,10 @@ const Banner: React.FC<IBannerProps> = props => {
       });
     }
     return (
-      <>
-        <h3 style={{ display: "inline" }}>Points: </h3>
+      <div className="flex-container flex-wrap">
+        <h3 className="text no-margin">Points: </h3>
         {pointTags}
-      </>
+      </div>
     );
   };
   const renderCirclesBanner = () => {
@@ -71,16 +71,15 @@ const Banner: React.FC<IBannerProps> = props => {
       });
     }
     return (
-      <>
-        <h3 style={{ display: "inline" }}>Circles: </h3>
+      <div className="flex-container flex-wrap">
+        <h3 className="text no-margin">Circles: </h3>
         {circleTags}
-      </>
+      </div>
     );
   };
   return (
     <>
       {renderPointsBanner()}
-      <br />
       {renderCirclesBanner()}
     </>
   );

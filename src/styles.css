@@ -1,0 +1,23 @@
+.map-tag {
+  background: silver;
+  border-radius: 8px;
+  height: 16px;
+  padding: 3px;
+  margin: 3px;
+}
+.flex-container {
+  display: flex;
+  align-items: center;
+}
+.flex-wrap {
+  flex-wrap: wrap;
+}
+.full-height {
+  height: inherit;
+}
+.no-margin {
+  margin: 0px !important;
+}
+.text {
+  font-family: Arial, Helvetica, sans-serif;
+}

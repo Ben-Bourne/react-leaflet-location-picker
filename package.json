@@ -1,6 +1,6 @@
 {
   "name": "react-leaflet-location-picker",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "A flexible component for picking points or areas from react-leaflet.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -8,8 +8,8 @@
     "dist"
   ],
   "scripts": {
-    "build": "rm ./dist/* && tsc",
-    "devBuild": "tsc",
+    "build": "rm ./dist/* && npm run compile",
+    "compile": "tsc && cp src/styles.css dist/styles.css",
     "prepublish": "npm run build",
     "test": "./test.sh"
   },
