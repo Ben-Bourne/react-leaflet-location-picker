@@ -18,6 +18,7 @@ const defaultProps = {
     attribution:
       '&amp;copy <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
   },
+  mapStyle: { height: 400, width: "auto" } as React.CSSProperties,
   bindMap: true,
   overlayAll: true,
   showInputs: true,
@@ -44,11 +45,11 @@ type CircleMode = {
   banner: boolean;
 };
 
-export type ILocationPickerState = Readonly<typeof defaultState>;
+type ILocationPickerState = Readonly<typeof defaultState>;
 const defaultState = {
   lat: 0,
   lng: 0,
-  pickerMode: "point" as PickerMode,
+  pickerMode: "points" as PickerMode,
   points: [] as LatLngTuple[],
   circles: [] as Circle[],
   circleCenter: null as LatLngTuple | null,
@@ -72,12 +73,13 @@ export default class LocationPicker extends Component<
   static defaultProps = defaultProps;
 
   render() {
-    const bounds = this.props.bindMap ? mapBounds : undefined;
+    const { bindMap, mapStyle, tileLayer } = this.props;
+    const bounds = bindMap ? mapBounds : undefined;
     return (
-      <div>
+      <>
         {this.renderBanner()}
         <Map
-          style={{ height: 400, width: 600 }}
+          style={mapStyle}
           className="leaflet-crosshair"
           viewport={defaultViewport}
           maxBounds={bounds}
@@ -85,12 +87,12 @@ export default class LocationPicker extends Component<
           onClick={this.handleClick}
           minZoom={2}
         >
-          <TileLayer {...this.props.tileLayer} />
-          {this.renderControl()}
+          <TileLayer {...tileLayer} />
+          {this.renderModeControl()}
           {this.renderOverlays()}
         </Map>
         {this.renderInputs()}
-      </div>
+      </>
     );
   }
   private renderBanner = () => {
@@ -116,7 +118,7 @@ export default class LocationPicker extends Component<
     }
     return <Banner {...bannerProps} />;
   };
-  private renderControl = () => {
+  private renderModeControl = () => {
     const { pointMode, circleMode } = this.props;
     const buttons: JSX.Element[] = [];
     if (pointMode) {

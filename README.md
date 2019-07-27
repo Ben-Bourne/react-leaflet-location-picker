@@ -1,7 +1,9 @@
 # react-leaflet-location-picker
 
-This module expands upon react-leaflet to give the user an easy way of selecting points and shapes from the map.
-The project is in its infancy at the moment but regular feature releases are planned.
+This module expands upon react-leaflet to give the user an easy way of selecting points and circles from the map. It is highly configurable and allows the user to use all, none or any combination in between of the selection modes. Additionally each mode can be controlled internally by the component or externally by a parent component effectively making it a controlled component.
+This gives you a simple to use and very powerful tool for an application that needs to select points or areas from a map.
+
+Project progress can be tracked at https://trello.com/b/9xlwajmT/react-leaflet-location-picker
 
 ## Table of Contents
 
@@ -26,7 +28,7 @@ The map objects are stored in the state in the following manner.
 ```javascript
 type Point = [number, number];
 type Circle = {
-  centre: Point,
+  center: Point,
   radius: number // in metres
 };
 ```
