@@ -1,9 +1,10 @@
 # react-leaflet-location-picker
 
 This module expands upon react-leaflet to give the user an easy way of selecting points and circles from the map. It is highly configurable and allows the user to use all, none or any combination in between of the selection modes. Additionally each mode can be controlled internally by the component or externally by a parent component effectively making it a controlled component.
+
 This gives you a simple to use and very powerful tool for an application that needs to select points or areas from a map.
 
-Project progress can be tracked at https://trello.com/b/9xlwajmT/react-leaflet-location-picker
+Project progress can be tracked on the <a href="https://trello.com/b/9xlwajmT/react-leaflet-location-picker">trello board</a>.
 
 ## Table of Contents
 
@@ -53,7 +54,9 @@ Mode props:
 - polygonMode?: {control?:{values:Polygon[], onClick?:(Point)=>void, onRemove?:(Polygon)=>void, onAdd?:()=>void}, banner: boolean} Default undefined
 
 The mode props require some additional explanation. They are all optional, if omitted the map will not use the corresponding mode at all. If included but the 'control' object is omitted then the component will manage it's own state internally. This is the simplest way to use a mode but will make it difficult to do anything other than use the component visually.
+
 If the 'control' object is provided then managing the components values is up to YOU, the component will use the values you pass it and clicking on the map will pass the onClick method of the current mode of operation (i.e. points, circles or polygons) the lat lng tuple of the click location. You can decide what to do with this. Passing one of the modes an onRemove method will call that function with the value of the corresponding point when the X button is pressed in the banner.
+
 The polygonMode prop has one additional method 'onAdd', this will be called when the user clicks the 'Add' button in the control section. This is neccessary because unlike points and circles, a polygon can require any number of clicks in its construction.
 
 ## Examples

@@ -21,8 +21,9 @@ const defaultProps = {
   mapStyle: { height: 300, width: "auto" } as React.CSSProperties,
   bindMap: true,
   overlayAll: true,
-  useDynamic: true,
+  showControls: true,
   showInputs: true,
+  useDynamic: true,
   precision: 6,
   pointMode: undefined as PointMode | undefined,
   circleMode: undefined as CircleMode | undefined,
@@ -144,7 +145,8 @@ export default class LocationPicker extends Component<
     return <Banner {...bannerProps} />;
   };
   private renderModeControl = () => {
-    const { pointMode, circleMode, polygonMode } = this.props;
+    const { pointMode, circleMode, polygonMode, showControls } = this.props;
+    if (!showControls) return null;
     const buttons: JSX.Element[] = [];
     if (pointMode) {
       buttons.push(
