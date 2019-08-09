@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import { Map, TileLayer, Viewport } from "react-leaflet";
-import { LatLngTuple, LeafletMouseEvent, polygon } from "leaflet";
+import { LatLngTuple, LeafletMouseEvent } from "leaflet";
 import Control from "react-leaflet-control";
 import Banner, { IBannerProps } from "./Banner";
 import Overlays, { IOverlaysProps } from "./Overlays";
@@ -8,8 +8,9 @@ import { calculateRadius, indexOfObject, setPrecision } from "./utils";
 import "leaflet/dist/leaflet.css";
 
 export type Circle = { center: LatLngTuple; radius: number };
+export type Rectangle = [LatLngTuple, LatLngTuple];
 export type Polygon = LatLngTuple[];
-export type PickerMode = "points" | "circles" | "polygons";
+export type PickerMode = "points" | "circles" | "rectangles" | "polygons";
 
 export type ILocationPickerProps = Readonly<typeof defaultProps>;
 const defaultProps = {
@@ -27,6 +28,7 @@ const defaultProps = {
   precision: 6,
   pointMode: undefined as PointMode | undefined,
   circleMode: undefined as CircleMode | undefined,
+  rectangleMode: undefined as RectangleMode | undefined,
   polygonMode: undefined as PolygonMode | undefined
 };
 
@@ -44,6 +46,15 @@ export type CircleMode = {
     values: Circle[];
     onClick?: (point: LatLngTuple) => void;
     onRemove?: (circle: Circle) => void;
+  };
+  banner: boolean;
+};
+
+export type RectangleMode = {
+  control?: {
+    values: Rectangle[];
+    onClick?: (point: LatLngTuple) => void;
+    onRemove?: (rectangle: Rectangle) => void;
   };
   banner: boolean;
 };
@@ -68,6 +79,8 @@ const defaultState = {
   points: [] as LatLngTuple[],
   circles: [] as Circle[],
   circleCenter: null as LatLngTuple | null,
+  rectangles: [] as Rectangle[],
+  rectangleCorner: null as LatLngTuple | null,
   polygons: [] as Polygon[],
   partialPolygon: [] as Polygon
 };
@@ -90,7 +103,6 @@ export default class LocationPicker extends Component<
 
   render() {
     const { bindMap, mapStyle, useDynamic, tileLayer } = this.props;
-    const bounds = bindMap ? mapBounds : undefined;
     return (
       <>
         {this.renderBanner()}
@@ -98,7 +110,7 @@ export default class LocationPicker extends Component<
           style={mapStyle}
           className="leaflet-crosshair"
           viewport={defaultViewport}
-          maxBounds={bounds}
+          maxBounds={bindMap ? mapBounds : undefined}
           maxBoundsViscosity={1}
           onClick={this.handleClick}
           onMouseMove={useDynamic ? this.handleMouseMove : undefined}
@@ -113,7 +125,7 @@ export default class LocationPicker extends Component<
     );
   }
   private renderBanner = () => {
-    const { pointMode, circleMode, polygonMode } = this.props;
+    const { pointMode, circleMode, rectangleMode, polygonMode } = this.props;
     const bannerProps: IBannerProps = {};
     if (pointMode && pointMode.banner) {
       if (pointMode.control) {
@@ -133,6 +145,15 @@ export default class LocationPicker extends Component<
         bannerProps.circleRemoval = this.removeObject("circles");
       }
     }
+    if (rectangleMode && rectangleMode.banner) {
+      if (rectangleMode.control) {
+        bannerProps.rectangles = rectangleMode.control.values;
+        bannerProps.rectangleRemoval = rectangleMode.control.onRemove;
+      } else {
+        bannerProps.rectangles = this.state.rectangles;
+        bannerProps.rectangleRemoval = this.removeObject("rectangles");
+      }
+    }
     if (polygonMode && polygonMode.banner) {
       if (polygonMode.control) {
         bannerProps.polygons = polygonMode.control.values;
@@ -145,7 +166,13 @@ export default class LocationPicker extends Component<
     return <Banner {...bannerProps} />;
   };
   private renderModeControl = () => {
-    const { pointMode, circleMode, polygonMode, showControls } = this.props;
+    const {
+      pointMode,
+      circleMode,
+      rectangleMode,
+      polygonMode,
+      showControls
+    } = this.props;
     if (!showControls) return null;
     const buttons: JSX.Element[] = [];
     if (pointMode) {
@@ -159,6 +186,13 @@ export default class LocationPicker extends Component<
       buttons.push(
         <button key={"circle"} onClick={this.changeMode("circles")}>
           Circle
+        </button>
+      );
+    }
+    if (rectangleMode) {
+      buttons.push(
+        <button key={"rectangle"} onClick={this.changeMode("rectangles")}>
+          Rectangle
         </button>
       );
     }
@@ -192,11 +226,12 @@ export default class LocationPicker extends Component<
     const opts: IOverlaysProps = {
       points: this.calculatePoints(),
       circles: this.calculateCircles(),
+      rectangles: this.calculateRectangles(),
       polygons: this.calculatePolygons()
     };
     return <Overlays {...opts} />;
   };
-  private calculatePoints = () => {
+  private calculatePoints = (): LatLngTuple[] => {
     const { pointMode, overlayAll } = this.props;
     const { pickerMode, points } = this.state;
     if (pointMode && (overlayAll || pickerMode === "points")) {
@@ -204,12 +239,12 @@ export default class LocationPicker extends Component<
     }
     return [];
   };
-  private calculateCircles = () => {
+  private calculateCircles = (): Circle[] => {
     const { circleMode, overlayAll, useDynamic } = this.props;
     const { pickerMode, circles, circleCenter, hoverPosition } = this.state;
     if (circleMode && (overlayAll || pickerMode === "circles")) {
       if (circleMode.control) return circleMode.control.values;
-      const movingCircle =
+      const movingCircle: Circle | null =
         useDynamic && circleCenter
           ? {
               center: circleCenter,
@@ -220,16 +255,31 @@ export default class LocationPicker extends Component<
     }
     return [];
   };
-  private calculatePolygons = () => {
+  private calculateRectangles = (): Rectangle[] => {
+    const { rectangleMode, overlayAll, useDynamic } = this.props;
+    const {
+      pickerMode,
+      rectangles,
+      rectangleCorner,
+      hoverPosition
+    } = this.state;
+    if (rectangleMode && (overlayAll || pickerMode === "rectangles")) {
+      if (rectangleMode.control) return rectangleMode.control.values;
+      const movingRectangle: Rectangle | null =
+        useDynamic && rectangleCorner ? [rectangleCorner, hoverPosition] : null;
+      return movingRectangle
+        ? rectangles.concat([movingRectangle])
+        : rectangles;
+    }
+    return [];
+  };
+  private calculatePolygons = (): Polygon[] => {
     const { polygonMode, overlayAll, useDynamic } = this.props;
     const { pickerMode, polygons, partialPolygon, hoverPosition } = this.state;
     if (polygonMode && (overlayAll || pickerMode === "polygons")) {
       if (polygonMode.control) return polygonMode.control.values;
-      const movingPolygon = useDynamic
-        ? partialPolygon.concat([hoverPosition])
-        : null;
-      return movingPolygon
-        ? polygons.concat([movingPolygon])
+      return useDynamic
+        ? polygons.concat([partialPolygon.concat([hoverPosition])])
         : polygons.concat([partialPolygon]);
     }
     return [];
@@ -261,12 +311,20 @@ export default class LocationPicker extends Component<
   };
 
   private handleClick = (e: LeafletMouseEvent) => {
-    const { precision, pointMode, circleMode, polygonMode } = this.props;
+    const {
+      precision,
+      pointMode,
+      circleMode,
+      rectangleMode,
+      polygonMode
+    } = this.props;
     const {
       pickerMode,
       points,
       circles,
       circleCenter,
+      rectangles,
+      rectangleCorner,
       partialPolygon
     } = this.state;
     const lat = setPrecision(e.latlng.lat, precision);
@@ -300,6 +358,26 @@ export default class LocationPicker extends Component<
         }
         break;
       }
+      case "rectangles": {
+        if (
+          rectangleMode &&
+          rectangleMode.control &&
+          rectangleMode.control.onClick
+        ) {
+          rectangleMode.control.onClick([lat, lng]);
+        } else {
+          if (rectangleCorner) {
+            const rectangle: Rectangle = [rectangleCorner, [lat, lng]];
+            this.setState({
+              rectangleCorner: null,
+              rectangles: rectangles.concat([rectangle])
+            });
+          } else {
+            this.setState({ rectangleCorner: [lat, lng] });
+          }
+        }
+        break;
+      }
       case "polygons": {
         if (polygonMode && polygonMode.control && polygonMode.control.onClick) {
           polygonMode.control.onClick([lat, lng]);
@@ -327,7 +405,12 @@ export default class LocationPicker extends Component<
     this.setState(newState);
   };
   private changeMode = (pickerMode: PickerMode) => () => {
-    this.setState({ pickerMode, circleCenter: null, partialPolygon: [] });
+    this.setState({
+      pickerMode,
+      circleCenter: null,
+      partialPolygon: [],
+      rectangleCorner: null
+    });
   };
   private addPolygon = () => {
     this.setState({

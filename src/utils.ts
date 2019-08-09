@@ -1,5 +1,5 @@
-import L, { LatLngTuple, polygon } from "leaflet";
-import { Circle, Polygon } from "./LocationPicker";
+import L, { LatLngTuple } from "leaflet";
+import { Circle, Polygon, Rectangle } from "./LocationPicker";
 
 export const setPrecision = (
   value: number | string,
@@ -23,6 +23,10 @@ export const stringifyPoint = (point: LatLngTuple): string => {
 export const stringifyCircle = (circle: Circle): string => {
   const point = stringifyPoint(circle.center);
   return `(${point} - ${Math.round(circle.radius)})`;
+};
+
+export const stringifyRectangle = (rectangle: Rectangle): string => {
+  return `[${stringifyPoint(rectangle[0])},${stringifyPoint(rectangle[1])}]`;
 };
 
 export const stringifyPolygon = (polygon: Polygon): string => {

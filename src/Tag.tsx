@@ -4,7 +4,7 @@ import "./styles.css";
 
 export interface ITagProps {
   content: string;
-  onRemove?: (value: any) => void;
+  onRemove?: () => void;
 }
 
 const Tag: React.FC<ITagProps> = props => {
