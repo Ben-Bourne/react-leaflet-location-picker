@@ -145,6 +145,7 @@ export default class LocationPicker extends Component<
       pointMode,
       circleMode,
       rectangleMode,
+      polylineMode,
       polygonMode
     } = this.props;
     if (startPort === "auto") {
@@ -159,9 +160,13 @@ export default class LocationPicker extends Component<
         rectangleMode.control.values.forEach(rect =>
           rect.forEach(point => points.push(point))
         );
+      if (polylineMode && polylineMode.control)
+        polylineMode.control.values.forEach(polyl =>
+          polyl.forEach(point => points.push(point))
+        );
       if (polygonMode && polygonMode.control)
-        polygonMode.control.values.forEach(poly =>
-          poly.forEach(point => points.push(point))
+        polygonMode.control.values.forEach(polyg =>
+          polyg.forEach(point => points.push(point))
         );
       if (points.length > 0) {
         const bounds = new LatLngBounds(points);
