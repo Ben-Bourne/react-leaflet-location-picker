@@ -1,5 +1,5 @@
 import L, { LatLngTuple, LatLngBounds } from "leaflet";
-import { Circle, Polygon, Rectangle } from "./LocationPicker";
+import { Circle, PointSeries, Rectangle } from "./LocationPicker";
 
 export const earthRadius = 6371000;
 
@@ -55,11 +55,11 @@ export const stringifyRectangle = (rectangle: Rectangle): string => {
   return `[${stringifyPoint(rectangle[0])},${stringifyPoint(rectangle[1])}]`;
 };
 
-export const stringifyPolygon = (polygon: Polygon): string => {
-  let stringPolygon = "[";
-  polygon.forEach(point => (stringPolygon += stringifyPoint(point)));
-  stringPolygon += "]";
-  return stringPolygon;
+export const stringifyPointSeries = (pointSeries: PointSeries): string => {
+  let stringPointSeries = "[";
+  pointSeries.forEach(point => (stringPointSeries += stringifyPoint(point)));
+  stringPointSeries += "]";
+  return stringPointSeries;
 };
 
 export const indexOfObject = (arr: any[], value: any): number => {

@@ -14,8 +14,13 @@ import "leaflet/dist/leaflet.css";
 
 export type Circle = { center: LatLngTuple; radius: number };
 export type Rectangle = [LatLngTuple, LatLngTuple];
-export type Polygon = LatLngTuple[];
-export type PickerMode = "points" | "circles" | "rectangles" | "polygons";
+export type PointSeries = LatLngTuple[];
+export type PickerMode =
+  | "points"
+  | "circles"
+  | "rectangles"
+  | "polylines"
+  | "polygons";
 export type IViewport = { center: [number, number]; zoom: number };
 
 export type ILocationPickerProps = Readonly<typeof defaultProps>;
@@ -36,7 +41,8 @@ const defaultProps = {
   pointMode: undefined as PointMode | undefined,
   circleMode: undefined as CircleMode | undefined,
   rectangleMode: undefined as RectangleMode | undefined,
-  polygonMode: undefined as PolygonMode | undefined
+  polylineMode: undefined as PointSeriesMode | undefined,
+  polygonMode: undefined as PointSeriesMode | undefined
 };
 
 export type PointMode = {
@@ -47,7 +53,6 @@ export type PointMode = {
   };
   banner: boolean;
 };
-
 export type CircleMode = {
   control?: {
     values: Circle[];
@@ -56,7 +61,6 @@ export type CircleMode = {
   };
   banner: boolean;
 };
-
 export type RectangleMode = {
   control?: {
     values: Rectangle[];
@@ -65,13 +69,12 @@ export type RectangleMode = {
   };
   banner: boolean;
 };
-
-export type PolygonMode = {
+export type PointSeriesMode = {
   control?: {
-    values: Polygon[];
+    values: PointSeries[];
     onClick?: (point: LatLngTuple) => void;
     onAdd?: () => void;
-    onRemove?: (polygon: Polygon) => void;
+    onRemove?: (pointSeries: PointSeries) => void;
   };
   banner: boolean;
 };
@@ -88,8 +91,10 @@ const defaultState = {
   circleCenter: null as LatLngTuple | null,
   rectangles: [] as Rectangle[],
   rectangleCorner: null as LatLngTuple | null,
-  polygons: [] as Polygon[],
-  partialPolygon: [] as Polygon
+  polylines: [] as PointSeries[],
+  partialPolyline: [] as PointSeries,
+  polygons: [] as PointSeries[],
+  partialPolygon: [] as PointSeries
 };
 
 const mapBounds: [LatLngTuple, LatLngTuple] = [[-90, -180], [90, 180]];
@@ -168,7 +173,13 @@ export default class LocationPicker extends Component<
     }
   };
   private renderBanner = () => {
-    const { pointMode, circleMode, rectangleMode, polygonMode } = this.props;
+    const {
+      pointMode,
+      circleMode,
+      rectangleMode,
+      polylineMode,
+      polygonMode
+    } = this.props;
     const bannerProps: IBannerProps = {};
     if (pointMode && pointMode.banner) {
       if (pointMode.control) {
@@ -197,6 +208,15 @@ export default class LocationPicker extends Component<
         bannerProps.rectangleRemoval = this.removeObject("rectangles");
       }
     }
+    if (polylineMode && polylineMode.banner) {
+      if (polylineMode.control) {
+        bannerProps.polylines = polylineMode.control.values;
+        bannerProps.polylineRemoval = polylineMode.control.onRemove;
+      } else {
+        bannerProps.polylines = this.state.polylines;
+        bannerProps.polylineRemoval = this.removeObject("polylines");
+      }
+    }
     if (polygonMode && polygonMode.banner) {
       if (polygonMode.control) {
         bannerProps.polygons = polygonMode.control.values;
@@ -213,6 +233,7 @@ export default class LocationPicker extends Component<
       pointMode,
       circleMode,
       rectangleMode,
+      polylineMode,
       polygonMode,
       showControls
     } = this.props;
@@ -238,6 +259,30 @@ export default class LocationPicker extends Component<
           Rectangle
         </button>
       );
+    }
+    if (polylineMode) {
+      buttons.push(
+        <button key={"polyline"} onClick={this.changeMode("polylines")}>
+          Lines
+        </button>
+      );
+      if (this.state.partialPolyline.length > 0) {
+        if (polylineMode.control) {
+          if (polylineMode.control.onAdd) {
+            buttons.push(
+              <button key="polylineAdd" onClick={polylineMode.control.onAdd}>
+                Add
+              </button>
+            );
+          }
+        } else {
+          buttons.push(
+            <button key="polylineAdd" onClick={this.addPolyline}>
+              Add
+            </button>
+          );
+        }
+      }
     }
     if (polygonMode) {
       buttons.push(
@@ -270,6 +315,7 @@ export default class LocationPicker extends Component<
       points: this.calculatePoints(),
       circles: this.calculateCircles(),
       rectangles: this.calculateRectangles(),
+      polylines: this.calculatePolylines(),
       polygons: this.calculatePolygons()
     };
     return <Overlays {...opts} />;
@@ -316,7 +362,23 @@ export default class LocationPicker extends Component<
     }
     return [];
   };
-  private calculatePolygons = (): Polygon[] => {
+  private calculatePolylines = (): PointSeries[] => {
+    const { polylineMode, overlayAll, useDynamic } = this.props;
+    const {
+      pickerMode,
+      polylines,
+      partialPolyline,
+      hoverPosition
+    } = this.state;
+    if (polylineMode && (overlayAll || pickerMode === "polylines")) {
+      if (polylineMode.control) return polylineMode.control.values;
+      return useDynamic
+        ? polylines.concat([partialPolyline.concat([hoverPosition])])
+        : polylines.concat([partialPolyline]);
+    }
+    return [];
+  };
+  private calculatePolygons = (): PointSeries[] => {
     const { polygonMode, overlayAll, useDynamic } = this.props;
     const { pickerMode, polygons, partialPolygon, hoverPosition } = this.state;
     if (polygonMode && (overlayAll || pickerMode === "polygons")) {
@@ -359,6 +421,7 @@ export default class LocationPicker extends Component<
       pointMode,
       circleMode,
       rectangleMode,
+      polylineMode,
       polygonMode
     } = this.props;
     const {
@@ -368,6 +431,7 @@ export default class LocationPicker extends Component<
       circleCenter,
       rectangles,
       rectangleCorner,
+      partialPolyline,
       partialPolygon
     } = this.state;
     const lat = setPrecision(e.latlng.lat, precision);
@@ -421,6 +485,20 @@ export default class LocationPicker extends Component<
         }
         break;
       }
+      case "polylines": {
+        if (
+          polylineMode &&
+          polylineMode.control &&
+          polylineMode.control.onClick
+        ) {
+          polylineMode.control.onClick([lat, lng]);
+        } else {
+          this.setState({
+            partialPolyline: partialPolyline.concat([[lat, lng]])
+          });
+        }
+        break;
+      }
       case "polygons": {
         if (polygonMode && polygonMode.control && polygonMode.control.onClick) {
           polygonMode.control.onClick([lat, lng]);
@@ -448,11 +526,21 @@ export default class LocationPicker extends Component<
     this.setState(newState);
   };
   private changeMode = (pickerMode: PickerMode) => () => {
+    if (pickerMode !== this.state.pickerMode) {
+      this.setState({
+        pickerMode,
+        circleCenter: null,
+        partialPolyline: [],
+        partialPolygon: [],
+        rectangleCorner: null
+      });
+    }
+  };
+
+  private addPolyline = () => {
     this.setState({
-      pickerMode,
-      circleCenter: null,
-      partialPolygon: [],
-      rectangleCorner: null
+      polylines: this.state.polylines.concat([this.state.partialPolyline]),
+      partialPolyline: []
     });
   };
   private addPolygon = () => {
@@ -461,9 +549,8 @@ export default class LocationPicker extends Component<
       partialPolygon: []
     });
   };
-
   private removeObject = (type: PickerMode) => (
-    mapObject: LatLngTuple | Circle | Polygon | Rectangle
+    mapObject: LatLngTuple | Circle | Rectangle | PointSeries
   ) => {
     const index = indexOfObject(this.state[type], mapObject);
     const newState = Object.assign(this.state[type], []);

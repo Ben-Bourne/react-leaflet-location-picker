@@ -1,12 +1,12 @@
 import React from "react";
 import { LatLngTuple } from "leaflet";
-import { Circle, Polygon, Rectangle } from "./LocationPicker";
+import { Circle, PointSeries, Rectangle } from "./LocationPicker";
 import Tag from "./Tag";
 import {
   stringifyPoint,
   stringifyCircle,
   stringifyRectangle,
-  stringifyPolygon
+  stringifyPointSeries
 } from "./utils";
 
 export interface IBannerProps {
@@ -16,8 +16,10 @@ export interface IBannerProps {
   circleRemoval?: (circle: Circle) => void;
   rectangles?: Rectangle[];
   rectangleRemoval?: (rectangle: Rectangle) => void;
-  polygons?: Polygon[];
-  polygonRemoval?: (polygon: Polygon) => void;
+  polylines?: PointSeries[];
+  polylineRemoval?: (polyline: PointSeries) => void;
+  polygons?: PointSeries[];
+  polygonRemoval?: (polygon: PointSeries) => void;
 }
 
 const Banner: React.FC<IBannerProps> = props => {
@@ -26,6 +28,7 @@ const Banner: React.FC<IBannerProps> = props => {
       {renderPointsBanner(props)}
       {renderCirclesBanner(props)}
       {renderRectanglesBanner(props)}
+      {renderPolylinesBanner(props)}
       {renderPolygonsBanner(props)}
     </>
   );
@@ -71,16 +74,29 @@ const renderRectanglesBanner = (props: IBannerProps) => {
 
   return constructBanner("Rectangles", rectangleTags);
 };
+const renderPolylinesBanner = (props: IBannerProps) => {
+  const { polylines, polylineRemoval } = props;
+  if (!polylines) return null;
+  const onRemove = polylineRemoval
+    ? (removePolyline: PointSeries) => () => {
+        polylineRemoval(removePolyline);
+      }
+    : () => undefined;
+  const polylineTags: JSX.Element[] = polylines.map((polyline, i) => {
+    return generateTag(stringifyPointSeries(polyline), i, onRemove(polyline));
+  });
+  return constructBanner("Lines", polylineTags);
+};
 const renderPolygonsBanner = (props: IBannerProps) => {
   const { polygons, polygonRemoval } = props;
   if (!polygons) return null;
   const onRemove = polygonRemoval
-    ? (removePolygon: Polygon) => () => {
+    ? (removePolygon: PointSeries) => () => {
         polygonRemoval(removePolygon);
       }
     : () => undefined;
   const polygonTags: JSX.Element[] = polygons.map((polygon, i) => {
-    return generateTag(stringifyPolygon(polygon), i, onRemove(polygon));
+    return generateTag(stringifyPointSeries(polygon), i, onRemove(polygon));
   });
   return constructBanner("Polygons", polygonTags);
 };
