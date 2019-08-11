@@ -1,5 +1,15 @@
-import L, { LatLngTuple } from "leaflet";
+import L, { LatLngTuple, LatLngBounds } from "leaflet";
 import { Circle, Polygon, Rectangle } from "./LocationPicker";
+
+export const earthRadius = 6371000;
+
+export const toRadians = (angle: number) => {
+  return angle * (Math.PI / 180);
+};
+
+export const toDegrees = (angle: number) => {
+  return angle * (180 / Math.PI);
+};
 
 export const setPrecision = (
   value: number | string,
@@ -14,6 +24,22 @@ export const calculateRadius = (
 ): number => {
   const leafletPoint = new L.LatLng(point1[0], point1[1]);
   return leafletPoint.distanceTo(point2);
+};
+
+export const calculateCircleBox = (circle: Circle): Rectangle => {
+  const { center, radius } = circle;
+  const lat1Rad = toRadians(center[0]);
+  const degreeSep =
+    toDegrees(
+      Math.asin(
+        Math.sin(lat1Rad) * Math.cos(radius / earthRadius) +
+          Math.cos(lat1Rad) * Math.sin(radius / earthRadius)
+      )
+    ) - center[0];
+  return [
+    [center[0] + degreeSep, center[1] - degreeSep],
+    [center[0] - degreeSep, center[1] + degreeSep]
+  ];
 };
 
 export const stringifyPoint = (point: LatLngTuple): string => {

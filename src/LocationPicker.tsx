@@ -1,16 +1,22 @@
 import React, { Component } from "react";
-import { Map, TileLayer, Viewport } from "react-leaflet";
-import { LatLngTuple, LeafletMouseEvent } from "leaflet";
+import { Map, TileLayer } from "react-leaflet";
+import { LatLngTuple, LatLngBounds, LeafletMouseEvent } from "leaflet";
 import Control from "react-leaflet-control";
 import Banner, { IBannerProps } from "./Banner";
 import Overlays, { IOverlaysProps } from "./Overlays";
-import { calculateRadius, indexOfObject, setPrecision } from "./utils";
+import {
+  calculateRadius,
+  calculateCircleBox,
+  indexOfObject,
+  setPrecision
+} from "./utils";
 import "leaflet/dist/leaflet.css";
 
 export type Circle = { center: LatLngTuple; radius: number };
 export type Rectangle = [LatLngTuple, LatLngTuple];
 export type Polygon = LatLngTuple[];
 export type PickerMode = "points" | "circles" | "rectangles" | "polygons";
+export type IViewport = { center: [number, number]; zoom: number };
 
 export type ILocationPickerProps = Readonly<typeof defaultProps>;
 const defaultProps = {
@@ -21,6 +27,7 @@ const defaultProps = {
   },
   mapStyle: { height: 300, width: "auto" } as React.CSSProperties,
   bindMap: true,
+  startPort: "default" as "auto" | "default" | IViewport,
   overlayAll: true,
   showControls: true,
   showInputs: true,
@@ -86,7 +93,7 @@ const defaultState = {
 };
 
 const mapBounds: [LatLngTuple, LatLngTuple] = [[-90, -180], [90, 180]];
-const defaultViewport: Viewport = {
+const defaultViewport: IViewport = {
   center: [30, 0],
   zoom: 2
 };
@@ -115,6 +122,7 @@ export default class LocationPicker extends Component<
           onClick={this.handleClick}
           onMouseMove={useDynamic ? this.handleMouseMove : undefined}
           minZoom={2}
+          ref="map"
         >
           <TileLayer {...tileLayer} />
           {this.renderModeControl()}
@@ -124,6 +132,41 @@ export default class LocationPicker extends Component<
       </>
     );
   }
+  public componentDidMount = () => {
+    // @ts-ignore
+    const map: Map = this.refs.map;
+    const {
+      startPort,
+      pointMode,
+      circleMode,
+      rectangleMode,
+      polygonMode
+    } = this.props;
+    if (startPort === "auto") {
+      let points: LatLngTuple[] = [];
+      if (pointMode && pointMode.control)
+        points = Array.from(pointMode.control.values);
+      if (circleMode && circleMode.control)
+        circleMode.control.values.forEach(circ =>
+          calculateCircleBox(circ).forEach(point => points.push(point))
+        );
+      if (rectangleMode && rectangleMode.control)
+        rectangleMode.control.values.forEach(rect =>
+          rect.forEach(point => points.push(point))
+        );
+      if (polygonMode && polygonMode.control)
+        polygonMode.control.values.forEach(poly =>
+          poly.forEach(point => points.push(point))
+        );
+      if (points.length > 0) {
+        const bounds = new LatLngBounds(points);
+        const zoom = map.leafletElement.getBoundsZoom(bounds);
+        map.leafletElement.setView(bounds.getCenter(), zoom);
+      }
+    } else if (startPort !== "default") {
+      map.leafletElement.setView(startPort.center, startPort.zoom);
+    }
+  };
   private renderBanner = () => {
     const { pointMode, circleMode, rectangleMode, polygonMode } = this.props;
     const bannerProps: IBannerProps = {};
@@ -420,7 +463,7 @@ export default class LocationPicker extends Component<
   };
 
   private removeObject = (type: PickerMode) => (
-    mapObject: LatLngTuple | Circle | Polygon
+    mapObject: LatLngTuple | Circle | Polygon | Rectangle
   ) => {
     const index = indexOfObject(this.state[type], mapObject);
     const newState = Object.assign(this.state[type], []);
