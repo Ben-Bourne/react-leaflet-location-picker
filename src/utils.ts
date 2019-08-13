@@ -1,4 +1,4 @@
-import L, { LatLngTuple, LatLngBounds } from "leaflet";
+import L, { LatLngTuple } from "leaflet";
 import { Circle, PointSeries, Rectangle } from "./LocationPicker";
 
 const EARTH_CIRCUMFERENCE = 40030000;

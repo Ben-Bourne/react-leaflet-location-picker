@@ -109,6 +109,7 @@ export default class LocationPicker extends Component<
 > {
   constructor(props: ILocationPickerProps) {
     super(props);
+    defaultState.pickerMode = this.getInitialPickerMode(props);
     this.state = defaultState;
   }
   static defaultProps = defaultProps;
@@ -420,6 +421,15 @@ export default class LocationPicker extends Component<
         </div>
       </div>
     );
+  };
+
+  private getInitialPickerMode = (props: ILocationPickerProps): PickerMode => {
+    if (props.pointMode) return "points";
+    if (props.circleMode) return "circles";
+    if (props.rectangleMode) return "rectangles";
+    if (props.polylineMode) return "polylines";
+    if (props.polygonMode) return "polygons";
+    return "points";
   };
 
   private handleClick = (e: LeafletMouseEvent) => {
