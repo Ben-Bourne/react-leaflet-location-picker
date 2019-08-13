@@ -168,7 +168,9 @@ export default class LocationPicker extends Component<
         polygonMode.control.values.forEach(polyg =>
           polyg.forEach(point => points.push(point))
         );
-      if (points.length > 0) {
+      if (points.length === 1) {
+        map.leafletElement.setView(points[0], 6);
+      } else if (points.length > 1) {
         const bounds = new LatLngBounds(points);
         const zoom = map.leafletElement.getBoundsZoom(bounds);
         map.leafletElement.setView(bounds.getCenter(), zoom);
