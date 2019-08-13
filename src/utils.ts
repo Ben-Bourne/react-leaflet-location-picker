@@ -1,7 +1,7 @@
 import L, { LatLngTuple, LatLngBounds } from "leaflet";
 import { Circle, PointSeries, Rectangle } from "./LocationPicker";
 
-export const earthRadius = 6371000;
+const EARTH_CIRCUMFERENCE = 40030000;
 
 export const toRadians = (angle: number) => {
   return angle * (Math.PI / 180);
@@ -28,14 +28,7 @@ export const calculateRadius = (
 
 export const calculateCircleBox = (circle: Circle): Rectangle => {
   const { center, radius } = circle;
-  const lat1Rad = toRadians(center[0]);
-  const degreeSep =
-    toDegrees(
-      Math.asin(
-        Math.sin(lat1Rad) * Math.cos(radius / earthRadius) +
-          Math.cos(lat1Rad) * Math.sin(radius / earthRadius)
-      )
-    ) - center[0];
+  const degreeSep = (radius * 360) / EARTH_CIRCUMFERENCE;
   return [
     [center[0] + degreeSep, center[1] - degreeSep],
     [center[0] - degreeSep, center[1] + degreeSep]
