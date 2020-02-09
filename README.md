@@ -41,9 +41,9 @@ type PointSeries = Point[];
 The component currently accepts the following props (props with question marks are optional):
 
 - geoserver?: Boolean value to enable geoserver support. Default is false and will use an object with url and attribution properties for the tile layer if you're familiar with leaflet (Defaults to OpenStreetMap settings). When enabled, provide the following props:
--geoPort: String. The port on which local geoserver is running.
--geoWorkspace: String. The workspace in which the maps layers are stored on geoserver.
--geoLayer: String. The map layer from the workspace that is to be used.
+  - geoPort: String. The port on which local geoserver is running.
+  - geoWorkspace: String. The workspace in which the maps layers are stored on geoserver.
+  - geoLayer: String. The map layer from the workspace that is to be used.
 - mapStyle?: Object. You can pass this prop as an object that contains any properties you could give to html element. If defining yourself you MUST pass it a fixed height property or the component will not display. Default { height: 300, width: "auto" }
 - bindMap?: Boolean. Allows you to set whether the map should be bound to the area of the globe. Default true.
 - startPort?: "auto" | "default" | Viewport. Where the map should set its initial viewport. "default" starts zoomed out viewing the whole globe. "auto" creates a view zoomed in on all the map entities provided i.e. points, circles etc. You can also pass in your own viewport and it will use that. Default "default".
