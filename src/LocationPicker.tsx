@@ -26,8 +26,7 @@ export type IViewport = { center: [number, number]; zoom: number };
 export type ILocationPickerProps = Readonly<typeof defaultProps>;
 const defaultProps = {
   geoserver: false,
-  geoPort: "",
-  geoWorkspace: "",
+  geoURL: "",
   geoLayer: "",
   mapStyle: { height: 300, width: "auto" } as React.CSSProperties,
   bindMap: true,
@@ -183,21 +182,21 @@ export default class LocationPicker extends Component<
     }
   };
   private renderTileLayer = () => {
-    const { geoserver, geoLayer, geoPort, geoWorkspace } = this.props;
-    const tileLayer = geoserver
-      ? {
-          url: `http://localhost:${geoPort}/geoserver/${geoWorkspace}/wms?`,
-          layers: geoLayer,
-          attribution: "Geoserver"
-        }
-      : {
-          url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-          layers: "",
-          attribution:
-            '&amp;copy <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-        };
+    const { geoserver, geoURL, geoLayer } = this.props;
+    const tileLayer = {
+      url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+      layers: "",
+      attribution:
+        '&amp;copy <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+    };
     if (geoserver) {
-      return <WMSTileLayer {...tileLayer} />;
+      return (
+        <WMSTileLayer
+          url={geoURL}
+          layers={geoLayer}
+          attribution={"Geoserver"}
+        />
+      );
     } else {
       return <TileLayer {...tileLayer} />;
     }
