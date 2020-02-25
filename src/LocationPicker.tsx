@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { Map, TileLayer } from "react-leaflet";
+import { Map, TileLayer, WMSTileLayer } from "react-leaflet";
 import { LatLngTuple, LatLngBounds, LeafletMouseEvent } from "leaflet";
 import Control from "react-leaflet-control";
 import Banner, { IBannerProps } from "./Banner";
@@ -25,11 +25,9 @@ export type IViewport = { center: [number, number]; zoom: number };
 
 export type ILocationPickerProps = Readonly<typeof defaultProps>;
 const defaultProps = {
-  tileLayer: {
-    url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-    attribution:
-      '&amp;copy <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-  },
+  geoserver: false,
+  geoURL: "",
+  geoLayer: "",
   mapStyle: { height: 300, width: "auto" } as React.CSSProperties,
   bindMap: true,
   startPort: "default" as "auto" | "default" | IViewport,
@@ -97,7 +95,10 @@ const defaultState = {
   partialPolygon: [] as PointSeries
 };
 
-const mapBounds: [LatLngTuple, LatLngTuple] = [[-90, -180], [90, 180]];
+const mapBounds: [LatLngTuple, LatLngTuple] = [
+  [-90, -180],
+  [90, 180]
+];
 const defaultViewport: IViewport = {
   center: [30, 0],
   zoom: 2
@@ -115,7 +116,7 @@ export default class LocationPicker extends Component<
   static defaultProps = defaultProps;
 
   render() {
-    const { bindMap, mapStyle, useDynamic, tileLayer } = this.props;
+    const { bindMap, mapStyle, useDynamic } = this.props;
     return (
       <>
         {this.renderBanner()}
@@ -130,7 +131,7 @@ export default class LocationPicker extends Component<
           minZoom={2}
           ref="map"
         >
-          <TileLayer {...tileLayer} />
+          {this.renderTileLayer()}
           {this.renderModeControl()}
           {this.renderOverlays()}
         </Map>
@@ -178,6 +179,26 @@ export default class LocationPicker extends Component<
       }
     } else if (startPort !== "default") {
       map.leafletElement.setView(startPort.center, startPort.zoom);
+    }
+  };
+  private renderTileLayer = () => {
+    const { geoserver, geoURL, geoLayer } = this.props;
+    const tileLayer = {
+      url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+      layers: "",
+      attribution:
+        '&amp;copy <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+    };
+    if (geoserver) {
+      return (
+        <WMSTileLayer
+          url={geoURL}
+          layers={geoLayer}
+          attribution={"Geoserver"}
+        />
+      );
+    } else {
+      return <TileLayer {...tileLayer} />;
     }
   };
   private renderBanner = () => {
