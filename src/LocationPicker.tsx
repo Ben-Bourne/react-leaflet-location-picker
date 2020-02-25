@@ -183,12 +183,6 @@ export default class LocationPicker extends Component<
   };
   private renderTileLayer = () => {
     const { geoserver, geoURL, geoLayer } = this.props;
-    const tileLayer = {
-      url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-      layers: "",
-      attribution:
-        '&amp;copy <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-    };
     if (geoserver) {
       return (
         <WMSTileLayer
@@ -198,7 +192,14 @@ export default class LocationPicker extends Component<
         />
       );
     } else {
-      return <TileLayer {...tileLayer} />;
+      return (
+        <TileLayer
+          url={"https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"}
+          attribution={
+            '&amp;copy <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+          }
+        />
+      );
     }
   };
   private renderBanner = () => {
